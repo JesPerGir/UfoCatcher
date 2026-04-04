@@ -1,4 +1,10 @@
+import AuthForm from "../components/AuthForm";
+
 function Register() {
-  return <h1>Aquí irá el formulario de Registro</h1>;
+  return (
+    <div>
+      <AuthForm isLogin={false} />
+    </div>
+  );
 }
 export default Register;

@@ -1,4 +1,10 @@
+import AuthForm from "../components/AuthForm";
+
 function Login() {
-  return <h1>Aquí irá el formulario de Login</h1>;
+  return (
+    <div>
+      <AuthForm isLogin={true} />
+    </div>
+  );
 }
 export default Login;
