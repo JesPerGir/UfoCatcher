@@ -55,16 +55,49 @@ app.get('/api/puntuaciones', async (req, res) => {
 // 2. Guardar una puntuación nueva
 app.post('/api/puntuaciones', async (req, res) => {
     try {
-        // Extrae el usuario y los puntos que envíe el frontend
-        const { usuario, puntos } = req.body;
-
-        // Crea un nuevo documento en la base de datos
-        const nuevaPuntuacion = new Score({ usuario, puntos });
-        await nuevaPuntuacion.save();
-
-        res.status(201).json({ mensaje: "Puntuación guardada con éxito", puntuacion: nuevaPuntuacion });
+        // Comprueba si el frontend está enviando un Array
+        if (Array.isArray(req.body)) {
+            // insertMany guarda todos los objetos de la lista de golpe en MongoDB
+            const puntuacionesGuardadas = await Score.insertMany(req.body);
+            res.status(201).json({ mensaje: "Múltiples puntuaciones guardadas", puntuaciones: puntuacionesGuardadas });
+        } else {
+            // Si no es un array, es que es una sola puntuación
+            const { usuario, puntos } = req.body;
+            const nuevaPuntuacion = new Score({ usuario, puntos });
+            await nuevaPuntuacion.save();
+            res.status(201).json({ mensaje: "Puntuación guardada con éxito", puntuacion: nuevaPuntuacion });
+        }
     } catch (error) {
         res.status(500).json({ error: "Error al guardar la puntuación" });
+    }
+});
+
+// 3. Actualizar una puntuación
+app.put('/api/puntuaciones/:id', async (req, res) => {
+    try {
+        const { id } = req.params; // Obtiene el ID
+        const { usuario, puntos } = req.body; // Obtiene los nuevos datos del body
+        
+        // Busca por ID y lo actualiza. { new: true } devuelve el dato ya modificado.
+        const puntuacionActualizada = await Score.findByIdAndUpdate(id, { usuario, puntos }, { new: true });
+        
+        if (!puntuacionActualizada) return res.status(404).json({ error: "Puntuación no encontrada" });
+        res.json({ mensaje: "Puntuación actualizada", puntuacion: puntuacionActualizada });
+    } catch (error) {
+        res.status(500).json({ error: "Error al actualizar la puntuación" });
+    }
+});
+
+// 4. Eliminar una puntuación
+app.delete('/api/puntuaciones/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const puntuacionBorrada = await Score.findByIdAndDelete(id);
+        
+        if (!puntuacionBorrada) return res.status(404).json({ error: "Puntuación no encontrada" });
+        res.json({ mensaje: "Puntuación borrada con éxito" });
+    } catch (error) {
+        res.status(500).json({ error: "Error al borrar la puntuación" });
     }
 });
 
