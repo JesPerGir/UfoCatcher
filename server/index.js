@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import Score from './models/Score.js';
 
 dotenv.config();
 
@@ -38,13 +39,33 @@ app.get('/', (req, res) => {
 });
 
 // Endpoint para las puntuaciones
-app.get('/api/puntuaciones', (req, res) => {
-    // Datos placeholder
-    const rankingFalso = [
-        { usuario: "Jesús", puntos: 1500 },
-        { usuario: "Jugador2", puntos: 1200 }
-    ];
-    res.json(rankingFalso);
+
+// 1. Obtener el Ranking
+app.get('/api/puntuaciones', async (req, res) => {
+    try {
+        // Busca todas las puntuaciones en MongoDB, las ordena de mayor a menor
+        // y coge solo el Top 10
+        const ranking = await Score.find().sort({ puntos: -1 }).limit(10);
+        res.json(ranking);
+    } catch (error) {
+        res.status(500).json({ error: "Error al obtener las puntuaciones" });
+    }
+});
+
+// 2. Guardar una puntuación nueva
+app.post('/api/puntuaciones', async (req, res) => {
+    try {
+        // Extrae el usuario y los puntos que envíe el frontend
+        const { usuario, puntos } = req.body;
+
+        // Crea un nuevo documento en la base de datos
+        const nuevaPuntuacion = new Score({ usuario, puntos });
+        await nuevaPuntuacion.save();
+
+        res.status(201).json({ mensaje: "Puntuación guardada con éxito", puntuacion: nuevaPuntuacion });
+    } catch (error) {
+        res.status(500).json({ error: "Error al guardar la puntuación" });
+    }
 });
 
 // --- ARRANCAR EL SERVIDOR ---
