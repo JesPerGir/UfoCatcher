@@ -1,5 +1,9 @@
 import express from 'express';
 import cors from 'cors';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // Inicializamos la aplicación de Express
 const app = express();
@@ -8,6 +12,22 @@ const PORT = 3000;
 // Configuración básica
 app.use(cors()); // Permite que React se conecte
 app.use(express.json()); // Prepara al servidor para que entienda datos en formato JSON
+
+// --- CONEXIÓN A LA BASE DE DATOS ---
+const connectDB = async () => {
+    try {
+        // Se pasa la ruta de .env
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log("🟢 ¡Conectado a la base de datos MongoDB Atlas!");
+    } catch (error) {
+        console.error("🔴 Error al conectar a MongoDB:", error);
+        // Si falla la base de datos, apagamos el servidor
+        process.exit(1); 
+    }
+};
+
+// Llamamos a la función
+connectDB();
 
 // --- ENDPOINTS ---
 
