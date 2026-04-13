@@ -17,7 +17,7 @@ export default function Home() {
   }, [isPlaying]);
 
   return (
-    // Aquí está la magia: min-h-[calc(100vh-74px)] asegura que el fondo abarque toda la pantalla
+    // min-h-[calc(100vh-74px)] asegura que el fondo abarque toda la pantalla
     // permitiendo que justify-center coloque los elementos en el centro geométrico perfecto.
     <div className={`w-full bg-fondo relative flex flex-col items-center justify-center ${!isPlaying ? 'min-h-[calc(100vh-74px)] p-4' : 'h-[calc(100vh-74px)]'}`}>
       

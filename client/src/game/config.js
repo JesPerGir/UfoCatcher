@@ -4,8 +4,11 @@ import PlayScene from './scenes/PlayScene';
 
 const config = {
     type: Phaser.AUTO,
+    
+    pixelArt: true, 
+    
     scale: {
-        mode: Phaser.Scale.RESIZE, 
+        mode: Phaser.Scale.RESIZE,
         width: '100%',
         height: '100%'
     },
