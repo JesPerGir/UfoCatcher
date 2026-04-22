@@ -46,25 +46,31 @@ export default function Navbar({ onOpenAuth }) {
               </button>
             </div>
           ) : (
-            // ZONA DE PERFIL
+            // ZONA DE PERFIL CON ENLACE ACTIVO
             <div className="flex items-center gap-6">
               
-              {/* Agrupa Nombre + Avatar */}
-              <div className="flex items-center gap-3">
+              {/* Envolvemos el nombre y el avatar en un Link hacia /perfil */}
+              <Link 
+                to="/perfil" 
+                className="flex items-center gap-3 group transition-transform hover:scale-105"
+              >
                 <div className="text-right hidden sm:block">
-                  <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold leading-none">Piloto</p>
-                  <p className="text-sm font-bold text-texto leading-tight">{user.username}</p>
+                  <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold leading-none group-hover:text-primario transition-colors">
+                    Piloto
+                  </p>
+                  <p className="text-sm font-bold text-texto leading-tight group-hover:text-primario transition-colors">
+                    {user.username}
+                  </p>
                 </div>
                 
-                {/* Avatar Placeholder: Círculo con Inicial */}
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primario to-secundario flex items-center justify-center shadow-sm border-2 border-white ring-1 ring-gray-100">
+                {/* Avatar con efecto de anillo al hacer hover */}
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primario to-secundario flex items-center justify-center shadow-sm border-2 border-white ring-1 ring-gray-100 group-hover:ring-primario transition-all">
                   <span className="text-white font-black text-lg">
                     {user.username.charAt(0).toUpperCase()}
                   </span>
                 </div>
-              </div>
+              </Link>
 
-              {/* Botón Salir */}
               <button 
                 onClick={logout}
                 className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors uppercase tracking-tighter border-b border-transparent hover:border-red-700"
