@@ -3,10 +3,12 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import Score from './models/Score.js';
+import jwt from 'jsonwebtoken';
+import User from './models/User.js'
 
 dotenv.config();
 
-// Inicializamos la aplicación de Express
+// Inicializa la aplicación de Express
 const app = express();
 const PORT = 3000;
 
@@ -22,13 +24,72 @@ const connectDB = async () => {
         console.log("🟢 ¡Conectado a la base de datos MongoDB Atlas!");
     } catch (error) {
         console.error("🔴 Error al conectar a MongoDB:", error);
-        // Si falla la base de datos, apagamos el servidor
+        // Si falla la base de datos, apaga el servidor
         process.exit(1); 
     }
 };
 
-// Llamamos a la función
 connectDB();
+
+// REGISTRO DE USUARIO
+app.post('/api/auth/register', async (req, res) => {
+    try {
+        const { username, email, password } = req.body;
+        
+        // Comprueba si el usuario o el email ya están en la base de datos
+        const userExists = await User.findOne({ $or: [{ email }, { username }] });
+        if (userExists) {
+            return res.status(400).json({ error: "El piloto o el correo ya están registrados" });
+        }
+
+        // Crea el nuevo usuario (Mongoose llamará a bcrypt automáticamente)
+        const newUser = new User({ username, email, password });
+        await newUser.save();
+
+        // Creamos su "id de usuario" (Token)
+        const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+        res.status(201).json({
+            mensaje: "¡Piloto registrado con éxito!",
+            usuario: { id: newUser._id, username: newUser.username, email: newUser.email },
+            token
+        });
+    } catch (error) {
+        console.error("🔴 Error oculto al registrar:", error);
+        res.status(500).json({ error: "Error en el servidor al registrar" });
+    }
+});
+
+// LOGIN DE USUARIO
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        // Busca al usuario por su email
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ error: "Credenciales inválidas" });
+        }
+
+        // Usa la función auxiliar del modelo para comparar contraseñas
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
+            return res.status(400).json({ error: "Credenciales inválidas" });
+        }
+
+        // Crea su token
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+        res.json({
+            mensaje: "¡Bienvenido de vuelta, comandante!",
+            usuario: { id: user._id, username: user.username, email: user.email },
+            token
+        });
+
+    } catch (error) {
+        res.status(500).json({ error: "Error en el servidor al iniciar sesión" });
+    }
+});
 
 // --- ENDPOINTS ---
 
@@ -40,7 +101,7 @@ app.get('/', (req, res) => {
 
 // Endpoint para las puntuaciones
 
-// 1. Obtener el Ranking
+// Obtener el Ranking
 app.get('/api/puntuaciones', async (req, res) => {
     try {
         // Busca todas las puntuaciones en MongoDB, las ordena de mayor a menor
@@ -52,7 +113,7 @@ app.get('/api/puntuaciones', async (req, res) => {
     }
 });
 
-// 2. Guardar una puntuación nueva
+// Guardar una puntuación nueva
 app.post('/api/puntuaciones', async (req, res) => {
     try {
         // Comprueba si el frontend está enviando un Array
@@ -72,7 +133,7 @@ app.post('/api/puntuaciones', async (req, res) => {
     }
 });
 
-// 3. Actualizar una puntuación
+// Actualizar una puntuación
 app.put('/api/puntuaciones/:id', async (req, res) => {
     try {
         const { id } = req.params; // Obtiene el ID
@@ -88,7 +149,7 @@ app.put('/api/puntuaciones/:id', async (req, res) => {
     }
 });
 
-// 4. Eliminar una puntuación
+// Eliminar una puntuación
 app.delete('/api/puntuaciones/:id', async (req, res) => {
     try {
         const { id } = req.params;
