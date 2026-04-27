@@ -19,7 +19,7 @@ export default class PlayScene extends Phaser.Scene {
         // EL JUGADOR
         this.player = this.physics.add.sprite(anchoPantalla / 2, altoPantalla / 2, 'ovni');
 
-        
+
         this.score = 0;
 
         // Grupos Físicos
@@ -141,7 +141,12 @@ export default class PlayScene extends Phaser.Scene {
     chocarEnemigo(player, enemigo) {
         this.physics.pause();
         player.setTint(0xff0000);
+
+        // Evento visual para el cartelito de React
         EventBus.emit('game-started', { message: `¡GAME OVER! Puntuación final: ${this.score}` });
+
+        // Emite la puntuación
+        EventBus.emit('game-over', this.score);
     }
 
     limpiarObjetos(grupo) {

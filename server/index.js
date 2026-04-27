@@ -31,35 +31,6 @@ const connectDB = async () => {
 
 connectDB();
 
-// REGISTRO DE USUARIO
-app.post('/api/auth/register', async (req, res) => {
-    try {
-        const { username, email, password } = req.body;
-        
-        // Comprueba si el usuario o el email ya están en la base de datos
-        const userExists = await User.findOne({ $or: [{ email }, { username }] });
-        if (userExists) {
-            return res.status(400).json({ error: "El piloto o el correo ya están registrados" });
-        }
-
-        // Crea el nuevo usuario (Mongoose llamará a bcrypt automáticamente)
-        const newUser = new User({ username, email, password });
-        await newUser.save();
-
-        // Creamos su "id de usuario" (Token)
-        const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-
-        res.status(201).json({
-            mensaje: "¡Piloto registrado con éxito!",
-            usuario: { id: newUser._id, username: newUser.username, email: newUser.email },
-            token
-        });
-    } catch (error) {
-        console.error("🔴 Error oculto al registrar:", error);
-        res.status(500).json({ error: "Error en el servidor al registrar" });
-    }
-});
-
 // LOGIN DE USUARIO
 app.post('/api/auth/login', async (req, res) => {
     try {
@@ -91,6 +62,52 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
+// REGISTRO DE USUARIO
+app.post('/api/auth/register', async (req, res) => {
+    try {
+        const { username, email, password } = req.body;
+        
+        // Comprueba si el usuario o el email ya están en la base de datos
+        const userExists = await User.findOne({ $or: [{ email }, { username }] });
+        if (userExists) {
+            return res.status(400).json({ error: "El piloto o el correo ya están registrados" });
+        }
+
+        // Crea el nuevo usuario (Mongoose llamará a bcrypt automáticamente)
+        const newUser = new User({ username, email, password });
+        await newUser.save();
+
+        // Creamos su "id de usuario" (Token)
+        const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+        res.status(201).json({
+            mensaje: "¡Piloto registrado con éxito!",
+            usuario: { id: newUser._id, username: newUser.username, email: newUser.email },
+            token
+        });
+    } catch (error) {
+        console.error("🔴 Error oculto al registrar:", error);
+        res.status(500).json({ error: "Error en el servidor al registrar" });
+    }
+});
+
+
+// Middleware para proteger rutas
+const verificarToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Formato: "Bearer TOKEN"
+
+    if (!token) return res.status(401).json({ error: "Acceso denegado. Se requiere token." });
+
+    try {
+        const verificado = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = verificado; // Guarda el ID del usuario para usarlo después
+        next();
+    } catch (error) {
+        res.status(400).json({ error: "Token inválido o caducado." });
+    }
+};
+
 // --- ENDPOINTS ---
 
 // Endpoint de prueba, se ejecutará al ir a "http://localhost:3000/"
@@ -101,46 +118,65 @@ app.get('/', (req, res) => {
 
 // Endpoint para las puntuaciones
 
-// Obtener el Ranking
-app.get('/api/puntuaciones', async (req, res) => {
+// OBTENER HISTORIAL
+app.get('/api/puntuaciones/historial', verificarToken, async (req, res) => {
     try {
-        // Busca todas las puntuaciones en MongoDB, las ordena de mayor a menor
-        // y coge solo el Top 10
-        const ranking = await Score.find().sort({ puntos: -1 }).limit(10);
-        res.json(ranking);
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
+
+        const historial = await Score.find({ usuario: user.username })
+                                     .sort({ fecha: -1 })
+                                     .limit(10);
+        res.json(historial);
     } catch (error) {
-        res.status(500).json({ error: "Error al obtener las puntuaciones" });
+        res.status(500).json({ error: "Error al obtener historial" });
     }
 });
 
-// Guardar una puntuación nueva
-app.post('/api/puntuaciones', async (req, res) => {
+// GUARDAR PUNTUACIÓN (Ahora es segura)
+app.post('/api/puntuaciones', verificarToken, async (req, res) => {
     try {
-        // Comprueba si el frontend está enviando un Array
-        if (Array.isArray(req.body)) {
-            // insertMany guarda todos los objetos de la lista de golpe en MongoDB
-            const puntuacionesGuardadas = await Score.insertMany(req.body);
-            res.status(201).json({ mensaje: "Múltiples puntuaciones guardadas", puntuaciones: puntuacionesGuardadas });
-        } else {
-            // Si no es un array, es que es una sola puntuación
-            const { usuario, puntos } = req.body;
-            const nuevaPuntuacion = new Score({ usuario, puntos });
-            await nuevaPuntuacion.save();
-            res.status(201).json({ mensaje: "Puntuación guardada con éxito", puntuacion: nuevaPuntuacion });
-        }
+        const { puntos } = req.body;
+        const user = await User.findById(req.user.id);
+
+        const nuevaPuntuacion = new Score({
+            usuario: user.username, // Lo sacamos del token, no del body
+            puntos: puntos,
+            fecha: new Date()
+        });
+
+        await nuevaPuntuacion.save();
+        res.status(201).json({ mensaje: "Puntuación guardada con éxito" });
     } catch (error) {
         res.status(500).json({ error: "Error al guardar la puntuación" });
     }
 });
 
-// Actualizar una puntuación
-app.put('/api/puntuaciones/:id', async (req, res) => {
+// RANKING GLOBAL (Es público)
+app.get('/api/puntuaciones/ranking', async (req, res) => {
     try {
-        const { id } = req.params; // Obtiene el ID
-        const { usuario, puntos } = req.body; // Obtiene los nuevos datos del body
+        const ranking = await Score.find().sort({ puntos: -1 }).limit(10);
+        res.json(ranking);
+    } catch (error) {
+        res.status(500).json({ error: "Error al obtener ranking" });
+    }
+});
+
+// Actualizar una puntuación (Protegido)
+app.put('/api/puntuaciones/:id', verificarToken, async (req, res) => {
+    try {
+        const { id } = req.params; 
+        const { puntos } = req.body; 
         
-        // Busca por ID y lo actualiza. { new: true } devuelve el dato ya modificado.
-        const puntuacionActualizada = await Score.findByIdAndUpdate(id, { usuario, puntos }, { new: true });
+        // Obtenemos el nombre del usuario de forma segura a través de su Token
+        const user = await User.findById(req.user.id);
+        
+        // Actualizamos usando el nombre real del usuario logueado
+        const puntuacionActualizada = await Score.findByIdAndUpdate(
+            id, 
+            { usuario: user.username, puntos }, 
+            { new: true }
+        );
         
         if (!puntuacionActualizada) return res.status(404).json({ error: "Puntuación no encontrada" });
         res.json({ mensaje: "Puntuación actualizada", puntuacion: puntuacionActualizada });
@@ -149,8 +185,8 @@ app.put('/api/puntuaciones/:id', async (req, res) => {
     }
 });
 
-// Eliminar una puntuación
-app.delete('/api/puntuaciones/:id', async (req, res) => {
+// Eliminar una puntuación (Protegido)
+app.delete('/api/puntuaciones/:id', verificarToken, async (req, res) => {
     try {
         const { id } = req.params;
         const puntuacionBorrada = await Score.findByIdAndDelete(id);
