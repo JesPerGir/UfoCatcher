@@ -77,7 +77,7 @@ app.post('/api/auth/register', async (req, res) => {
         const newUser = new User({ username, email, password });
         await newUser.save();
 
-        // Creamos su "id de usuario" (Token)
+        // Crea el "id de usuario" (Token)
         const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
         res.status(201).json({
@@ -90,7 +90,6 @@ app.post('/api/auth/register', async (req, res) => {
         res.status(500).json({ error: "Error en el servidor al registrar" });
     }
 });
-
 
 // Middleware para proteger rutas
 const verificarToken = (req, res, next) => {
@@ -140,7 +139,7 @@ app.post('/api/puntuaciones', verificarToken, async (req, res) => {
         const user = await User.findById(req.user.id);
 
         const nuevaPuntuacion = new Score({
-            usuario: user.username, // Lo sacamos del token, no del body
+            usuario: user.username,
             puntos: puntos,
             fecha: new Date()
         });
@@ -168,10 +167,10 @@ app.put('/api/puntuaciones/:id', verificarToken, async (req, res) => {
         const { id } = req.params; 
         const { puntos } = req.body; 
         
-        // Obtenemos el nombre del usuario de forma segura a través de su Token
+        // Obtiene el nombre del usuario de forma segura a través de su Token
         const user = await User.findById(req.user.id);
         
-        // Actualizamos usando el nombre real del usuario logueado
+        // Actualiza usando el nombre real del usuario logueado
         const puntuacionActualizada = await Score.findByIdAndUpdate(
             id, 
             { usuario: user.username, puntos }, 
@@ -195,6 +194,54 @@ app.delete('/api/puntuaciones/:id', verificarToken, async (req, res) => {
         res.json({ mensaje: "Puntuación borrada con éxito" });
     } catch (error) {
         res.status(500).json({ error: "Error al borrar la puntuación" });
+    }
+});
+
+
+// ACTUALIZAR PERFIL DE USUARIO
+app.put('/api/usuarios/perfil', verificarToken, async (req, res) => {
+    try {
+        // Extraemos los datos que nos envía el frontend
+        const { email, currentPassword, newPassword } = req.body;
+        
+        // Busca al usuario usando el ID de su Token seguro
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ error: "Piloto no encontrado" });
+
+        // Actualizar Email (Si lo ha cambiado)
+        if (email && email !== user.email) {
+            // Comprueba que el nuevo email no esté ya cogido por otro usuario
+            const emailTaken = await User.findOne({ email });
+            if (emailTaken) {
+                return res.status(400).json({ error: "Este correo ya está registrado en otra nave." });
+            }
+            user.email = email;
+        }
+
+        // Actualizar Contraseña (Si ha escrito algo en el campo "Nueva Contraseña")
+        if (newPassword) {
+            if (!currentPassword) {
+                return res.status(400).json({ error: "Debes introducir tu contraseña actual por seguridad." });
+            }
+            
+            // Verifica que la contraseña actual que ha puesto sea correcta
+            const isMatch = await user.comparePassword(currentPassword);
+            if (!isMatch) {
+                return res.status(400).json({ error: "La contraseña actual es incorrecta." });
+            }
+            
+            // Si es correcta, le asigna la nueva
+            user.password = newPassword; 
+        }
+
+        // Guardam los cambios. El modelo "User.js" volverá a encriptar la contraseña automáticamente gracias a bcrypt.
+        await user.save();
+
+        res.json({ mensaje: "¡Datos de piloto actualizados con éxito!" });
+
+    } catch (error) {
+        console.error("Error al actualizar perfil:", error);
+        res.status(500).json({ error: "Error en los servidores centrales." });
     }
 });
 

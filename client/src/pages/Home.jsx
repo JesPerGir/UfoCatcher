@@ -5,6 +5,7 @@ export default function Home() {
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
+    // Bloquea el scroll cuando el juego está activo
     if (isPlaying) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -17,8 +18,6 @@ export default function Home() {
   }, [isPlaying]);
 
   return (
-    // min-h-[calc(100vh-74px)] asegura que el fondo abarque toda la pantalla
-    // permitiendo que justify-center coloque los elementos en el centro geométrico perfecto.
     <div className={`w-full bg-fondo relative flex flex-col items-center justify-center ${!isPlaying ? 'min-h-[calc(100vh-74px)] p-4' : 'h-[calc(100vh-74px)]'}`}>
       
       {!isPlaying ? (
@@ -35,15 +34,7 @@ export default function Home() {
         </div>
       ) : (
         <div className="h-full w-full relative animate-fade-in bg-black">
-            
             <GameComponent />
-            
-            <button 
-              onClick={() => setIsPlaying(false)}
-              className="absolute top-4 right-4 z-50 px-4 py-2 bg-white/80 backdrop-blur-sm border border-primario text-primario font-bold rounded-lg hover:bg-primario hover:text-white transition-all shadow-lg"
-            >
-              Escapar (ESC)
-            </button>
         </div>
       )}
       

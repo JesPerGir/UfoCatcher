@@ -9,59 +9,97 @@ export default function Profile() {
   
   const [historial, setHistorial] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ password: '', confirmPassword: '' });
+  
+  // El estado del formulario incluye el email, contraseña actual y la doble confirmación
+  const [editForm, setEditForm] = useState({ 
+    email: user?.email || '', 
+    currentPassword: '', 
+    newPassword: '', 
+    confirmNewPassword: '' 
+  });
+  
   const [mensaje, setMensaje] = useState(null);
   const [descargando, setDescargando] = useState(false);
-
   const tablaRef = useRef(null);
 
   if (!user) return <Navigate to="/" />;
 
   useEffect(() => {
+    // Cuando el usuario entra o actualiza, inicializa el email con el suyo
+    setEditForm(prev => ({ ...prev, email: user.email }));
+    
     const fetchHistorial = async () => {
       try {
         const response = await fetch('http://localhost:3000/api/puntuaciones/historial', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        
         if (response.ok) {
           const data = await response.json();
           setHistorial(data);
-        } else {
-          setHistorial([
-            { _id: 1, puntos: 14500, fecha: new Date().toISOString() },
-            { _id: 2, puntos: 12200, fecha: new Date(Date.now() - 86400000).toISOString() },
-            { _id: 3, puntos: 8900, fecha: new Date(Date.now() - 172800000).toISOString() },
-          ]);
         }
       } catch (error) {
         console.error('Error al cargar historial', error);
       }
     };
-
     fetchHistorial();
-  }, [token]);
+  }, [token, user]);
 
   const handleEditChange = (e) => {
     setEditForm({ ...editForm, [e.target.name]: e.target.value });
   };
 
+  // Función para actualizar el perfil
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
-    if (editForm.password !== editForm.confirmPassword) {
-      setMensaje({ tipo: 'error', texto: 'Las contraseñas no coinciden' });
-      return;
+    setMensaje(null);
+
+    // Validaciones de Frontend
+    if (editForm.newPassword || editForm.confirmNewPassword) {
+      if (editForm.newPassword !== editForm.confirmNewPassword) {
+        setMensaje({ tipo: 'error', texto: 'Las contraseñas nuevas no coinciden.' });
+        return;
+      }
+      if (!editForm.currentPassword) {
+        setMensaje({ tipo: 'error', texto: 'Introduce tu contraseña actual para autorizar el cambio.' });
+        return;
+      }
     }
-    
-    setMensaje({ tipo: 'exito', texto: 'Perfil actualizado con éxito (Simulado)' });
-    setIsEditing(false);
-    setEditForm({ password: '', confirmPassword: '' });
+
+    // Petición al Backend
+    try {
+      const response = await fetch('http://localhost:3000/api/usuarios/perfil', {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({
+          email: editForm.email,
+          currentPassword: editForm.currentPassword,
+          newPassword: editForm.newPassword
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMensaje({ tipo: 'exito', texto: data.mensaje });
+        setIsEditing(false);
+        // Limpia contraseñas pero mantiene el email
+        setEditForm({ ...editForm, currentPassword: '', newPassword: '', confirmNewPassword: '' });
+        
+        // Recarga suavemente la página después de 1.5s para que AuthContext actualice el email global
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        setMensaje({ tipo: 'error', texto: data.error }); // Errores del servidor (ej: contraseña actual mal)
+      }
+    } catch (error) {
+      setMensaje({ tipo: 'error', texto: 'Error de conexión con el servidor.' });
+    }
   };
 
   const exportarPDF = async () => {
     setDescargando(true);
-    
-    // Espera 100ms a React para que aplique la clase 'overflow-hidden' y quite la barra de scroll de la pantalla
     await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
@@ -74,10 +112,7 @@ export default function Profile() {
       const dataUrl = await toPng(element, {
         backgroundColor: '#ffffff',
         pixelRatio: 2, 
-        style: {
-          transform: 'scale(1)', 
-          transformOrigin: 'top left'
-        }
+        style: { transform: 'scale(1)', transformOrigin: 'top left' }
       });
       
       const pdfPhysicalWidth = 280; 
@@ -90,7 +125,6 @@ export default function Profile() {
       });
 
       pdf.addImage(dataUrl, 'PNG', 0, 0, pdfPhysicalWidth, pdfPhysicalHeight);
-      
       pdf.save(`UfoCatcher_Historial_${user.username}.pdf`);
     } catch (error) {
       console.error("Error al generar el PDF:", error);
@@ -107,6 +141,7 @@ export default function Profile() {
 
       <div className="flex flex-col md:flex-row gap-8">
         
+        {/* COLUMNA IZQUIERDA: Tarjeta de Perfil */}
         <div className="w-full md:w-1/3">
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
             <div className="h-24 w-full bg-gradient-to-r from-primario to-secundario"></div>
@@ -132,33 +167,67 @@ export default function Profile() {
                     Editar Perfil
                   </button>
                 ) : (
+                  // NUEVO FORMULARIO DE EDICIÓN COMPLETO
                   <form onSubmit={handleUpdateProfile} className="space-y-4 animate-slide-up">
-                    <div className="pt-4 border-t border-gray-100">
-                      <p className="text-xs font-bold text-gray-400 mb-2 uppercase">Cambiar Contraseña</p>
-                      <input 
-                        type="password" name="password" placeholder="Nueva contraseña"
-                        value={editForm.password} onChange={handleEditChange}
-                        className="w-full mb-2 px-3 py-2 bg-gray-50 border border-gray-300 rounded focus:ring-2 focus:ring-primario outline-none text-sm"
-                      />
-                      <input 
-                        type="password" name="confirmPassword" placeholder="Confirmar nueva contraseña"
-                        value={editForm.confirmPassword} onChange={handleEditChange}
-                        className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded focus:ring-2 focus:ring-primario outline-none text-sm"
-                      />
+                    <div className="pt-4 border-t border-gray-100 space-y-3">
+                      
+                      {/* Campo Email */}
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Correo Electrónico</label>
+                        <input 
+                          type="email" name="email" 
+                          value={editForm.email} onChange={handleEditChange}
+                          className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded focus:ring-2 focus:ring-primario outline-none text-sm"
+                        />
+                      </div>
+
+                      {/* Campo Contraseña Actual */}
+                      <div className="mt-4 border-t border-gray-100 pt-3">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-red-500">Contraseña Actual (Requerida para cambios)</label>
+                        <input 
+                          type="password" name="currentPassword" placeholder="Introduce tu contraseña actual"
+                          value={editForm.currentPassword} onChange={handleEditChange}
+                          className="w-full mb-2 px-3 py-2 bg-gray-50 border border-gray-300 rounded focus:ring-2 focus:ring-red-400 outline-none text-sm"
+                        />
+                      </div>
+
+                      {/* Campos Nueva Contraseña */}
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nueva Contraseña</label>
+                          <input 
+                            type="password" name="newPassword" placeholder="Opcional"
+                            value={editForm.newPassword} onChange={handleEditChange}
+                            className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded focus:ring-2 focus:ring-primario outline-none text-sm"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Confirmar Nueva</label>
+                          <input 
+                            type="password" name="confirmNewPassword" placeholder="Opcional"
+                            value={editForm.confirmNewPassword} onChange={handleEditChange}
+                            className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded focus:ring-2 focus:ring-primario outline-none text-sm"
+                          />
+                        </div>
+                      </div>
+
                     </div>
-                    <div className="flex gap-2">
-                      <button type="button" onClick={() => setIsEditing(false)} className="flex-1 py-2 bg-gray-200 text-gray-700 font-bold rounded hover:bg-gray-300 transition">
+                    
+                    <div className="flex gap-2 pt-2">
+                      <button type="button" onClick={() => setIsEditing(false)} className="flex-1 py-2 border-2 border-gray-200 text-gray-600 font-bold rounded-lg hover:bg-gray-100 transition">
                         Cancelar
                       </button>
-                      <button type="submit" className="flex-1 py-2 bg-primario text-white font-bold rounded hover:bg-secundario transition shadow-sm">
+                      <button type="submit" className="flex-1 py-2 bg-primario text-white font-bold rounded-lg hover:bg-secundario transition shadow-sm">
                         Guardar
                       </button>
                     </div>
                   </form>
                 )}
 
+                {/* MENSAJES DE ERROR/ÉXITO */}
                 {mensaje && (
-                  <div className={`mt-4 p-2 rounded text-sm text-center ${mensaje.tipo === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                  <div className={`mt-4 p-3 rounded-lg text-sm text-center font-semibold animate-fade-in
+                    ${mensaje.tipo === 'error' ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-green-50 text-green-600 border border-green-200'}`}>
                     {mensaje.texto}
                   </div>
                 )}
@@ -167,6 +236,7 @@ export default function Profile() {
           </div>
         </div>
 
+        {/* COLUMNA DERECHA: Historial de Partidas */}
         <div className="w-full md:w-2/3">
           <div ref={tablaRef} className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
             <div className="flex justify-between items-center mb-6">
@@ -185,7 +255,6 @@ export default function Profile() {
                 <p className="text-sm mt-1">¡Sube a la nave y juega tu primera partida!</p>
               </div>
             ) : (
-              // 2. LA SOLUCIÓN: Si está descargando quitamos el scroll ('overflow-hidden'), si no lo dejamos normal ('overflow-x-auto')
               <div className={descargando ? "overflow-hidden" : "overflow-x-auto"}>
                 <table className="w-full text-left border-collapse">
                   <thead>
