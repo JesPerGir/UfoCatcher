@@ -234,7 +234,7 @@ app.put('/api/usuarios/perfil', verificarToken, async (req, res) => {
             user.password = newPassword; 
         }
 
-        // Guardam los cambios. El modelo "User.js" volverá a encriptar la contraseña automáticamente gracias a bcrypt.
+        // Guarda los cambios. El modelo "User.js" volverá a encriptar la contraseña automáticamente gracias a bcrypt.
         await user.save();
 
         res.json({ mensaje: "¡Datos de piloto actualizados con éxito!" });
