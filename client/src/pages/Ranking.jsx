@@ -73,7 +73,7 @@ const exportarPDF = async () => {
       <div className="max-w-5xl mx-auto">
         
         <h2 className="text-5xl font-black text-primario mb-10 uppercase tracking-tighter text-center drop-shadow-[0_0_10px_rgba(104,41,158,0.3)]">
-          🏆 Hall of Fame 🏆
+          🛸 Mejores Pilotos 🏆
         </h2>
         
         {cargando ? (
@@ -183,7 +183,7 @@ const exportarPDF = async () => {
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-primario rounded-full"></div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Recruit</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Piloto Experto</span>
                 </div>
               </div>
 

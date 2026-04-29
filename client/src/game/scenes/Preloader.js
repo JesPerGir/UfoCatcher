@@ -7,16 +7,21 @@ export default class Preloader extends Phaser.Scene {
 
     preload() {
         // Carga el OVNI original (de momento un placeholder)
-        this.load.image('ovni', '/sprites/Ufo.png');
-        
+        this.load.image('ovni', '/sprites/ufo.png');
+
         // Carga los recursos con las MISMAS keys que usas en PlayScene
-        this.load.image('asteroide1', '/sprites/Asteroide1.png'); // Grande
-        this.load.image('asteroide2', '/sprites/Asteroide2.png'); // Mediano
-        this.load.image('asteroide3', '/sprites/Asteroide3.png'); // Pequeño
-        this.load.image('orbe1', '/sprites/Orbe1.png');
-        this.load.image('orbe2', '/sprites/Orbe2.png');
-        this.load.image('orbe3', '/sprites/Orbe3.png');
+        this.load.image('asteroide1', '/sprites/asteroide1.png'); // Grande
+        this.load.image('asteroide2', '/sprites/asteroide2.png'); // Mediano
+        this.load.image('asteroide3', '/sprites/asteroide3.png'); // Pequeño
+        this.load.image('orbe1', '/sprites/orbe1.png');
+        this.load.image('orbe2', '/sprites/orbe2.png');
+        this.load.image('orbe3', '/sprites/orbe3.png');
         this.load.image('fondo', '/sprites/fondo.png');
+        
+        // Carga de audio
+        this.load.audio('musicaFondo', '/audio/musica_juego.ogg');
+        this.load.audio('sonidoOrbe', '/audio/sonido_orbe.wav');
+        this.load.audio('sonidoChocar', '/audio/sonido_chocar.wav');
     }
 
     create() {
