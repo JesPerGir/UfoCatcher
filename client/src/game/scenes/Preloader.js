@@ -6,10 +6,10 @@ export default class Preloader extends Phaser.Scene {
     }
 
     preload() {
-        // Carga el OVNI original (de momento un placeholder)
+        // Carga el OVNI original
         this.load.image('ovni', '/sprites/ufo.png');
 
-        // Carga los recursos con las MISMAS keys que usas en PlayScene
+        // Carga los recursos con las keys que se usan en PlayScene
         this.load.image('asteroide1', '/sprites/asteroide1.png'); // Grande
         this.load.image('asteroide2', '/sprites/asteroide2.png'); // Mediano
         this.load.image('asteroide3', '/sprites/asteroide3.png'); // Pequeño
