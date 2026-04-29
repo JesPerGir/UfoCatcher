@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 export default class Spawner {
     constructor(scene) {
         this.scene = scene; // Guarda la referencia a la PlayScene
-        
+
         // El Spawner es el dueño de estos grupos ahora
         this.enemigos = this.scene.physics.add.group();
         this.recompensas = this.scene.physics.add.group();
@@ -29,9 +29,9 @@ export default class Spawner {
         this.limpiarObjetos(this.recompensas);
     }
 
-generarEnemigo(dificultad) {
+    generarEnemigo(dificultad) {
         const tipo = Phaser.Math.Between(1, 100);
-        
+
         // Declara las variables al inicio para tenerlas controladas
         let key;
         let escala;
@@ -58,14 +58,14 @@ generarEnemigo(dificultad) {
 
         // Crea la entidad
         const asteroide = this.spawnAleatorio(this.enemigos, key, escala, velocidad, dificultad);
-        
+
         // Ajusta la hitbox
         const radio = asteroide.width * factorHitbox;
         asteroide.setCircle(radio, (asteroide.width / 2) - radio, (asteroide.height / 2) - radio);
-        
+
         // Aplica rotación inicial aleatoria
         asteroide.setAngle(Phaser.Math.Between(0, 360));
-        
+
         // Controla la velocidad de rotación evitando sobrescribir variables
         if (tipo > 85) {
             asteroide.setAngularVelocity(Phaser.Math.Between(300, 500));
@@ -76,7 +76,7 @@ generarEnemigo(dificultad) {
 
     generarRecompensa(dificultad) {
         const tipo = Phaser.Math.Between(1, 100);
-        
+
         // Inicializa con los valores por defecto (Orbe común)
         let key = 'orbe1';
         let escala = 2;
@@ -99,11 +99,11 @@ generarEnemigo(dificultad) {
 
         // Crea la entidad
         const orbe = this.spawnAleatorio(this.recompensas, key, escala, velocidad, dificultad);
-        
+
         // Ajusta la hitbox
         const radioOrbe = orbe.width * 0.30;
         orbe.setCircle(radioOrbe, (orbe.width / 2) - radioOrbe, (orbe.height / 2) - radioOrbe);
-        
+
         // Guarda su valor en puntos
         orbe.setData('puntosBase', puntosBase);
     }
@@ -113,9 +113,10 @@ generarEnemigo(dificultad) {
         const alto = this.scene.scale.height;
         const borde = Phaser.Math.Between(0, 3);
         const margen = 100;
-        
+
         let x, y, velX, velY;
-        const vel = velocidadBase * dificultad;
+        const multiplicadorVelocidad = 1 + ((dificultad - 1) * (1.5 / 7));
+        const vel = velocidadBase * multiplicadorVelocidad;
 
         switch (borde) {
             case 0: x = Phaser.Math.Between(0, ancho); y = -margen; velX = Phaser.Math.Between(-vel, vel); velY = Phaser.Math.Between(vel * 0.5, vel); break;
@@ -133,9 +134,9 @@ generarEnemigo(dificultad) {
 
     limpiarObjetos(grupo) {
         const ancho = this.scene.scale.width, alto = this.scene.scale.height, limite = 200;
-        grupo.getChildren().forEach(objeto => { 
+        grupo.getChildren().forEach(objeto => {
             if (objeto.x < -limite || objeto.x > ancho + limite || objeto.y < -limite || objeto.y > alto + limite) {
-                objeto.destroy(); 
+                objeto.destroy();
             }
         });
     }

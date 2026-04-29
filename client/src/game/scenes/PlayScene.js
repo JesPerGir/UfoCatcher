@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import Player from '../entities/Player'; 
-import Spawner from '../entities/Spawner'; 
+import Player from '../entities/Player';
+import Spawner from '../entities/Spawner';
 import UIManager from '../entities/UIManager';
 
 export default class PlayScene extends Phaser.Scene {
@@ -23,10 +23,10 @@ export default class PlayScene extends Phaser.Scene {
         graphics.fillCircle(4, 4, 4);
         graphics.generateTexture('particula', 8, 8);
 
-        // INICIALIZAMOS ENTIDADES
+        // INICIALIZA ENTIDADES
         this.player = new Player(this, anchoPantalla / 2, altoPantalla / 2);
         this.spawner = new Spawner(this);
-        this.ui = new UIManager(this); // INICIALIZAMOS LA UI
+        this.ui = new UIManager(this); // INICIALIZA LA UI
 
         this.explosionOrbes = this.add.particles(0, 0, 'particula', {
             speed: { min: 80, max: 200 },
@@ -41,8 +41,8 @@ export default class PlayScene extends Phaser.Scene {
         this.score = 0;
         this.segundos = 0;
         this.dificultad = 1;
-        this.maxDificultad = 3;
-        
+        this.maxDificultad = 8;
+
         this.timerEvent = this.time.addEvent({
             delay: 1000,
             callback: () => { if (!this.player.isDead) this.segundos++; },
@@ -69,46 +69,83 @@ export default class PlayScene extends Phaser.Scene {
         // CONTROL DE MUERTE CINEMÁTICA
         if (this.player.isDead) {
             const margen = 150;
-            if (this.player.x < -margen || this.player.x > this.scale.width + margen || 
+            if (this.player.x < -margen || this.player.x > this.scale.width + margen ||
                 this.player.y < -margen || this.player.y > this.scale.height + margen) {
-                
+
                 // Para la escena y el audio aquí
                 this.physics.pause();
                 this.timerEvent.remove();
-                if (this.bgm) { 
-                    this.bgm.setDetune(-800); 
-                    this.bgm.setVolume(0.15); 
+                if (this.bgm) {
+                    this.bgm.setDetune(-800);
+                    this.bgm.setVolume(0.15);
                 }
-                
+
                 // Llama a la UI para que pinte el menú final
                 this.ui.mostrarMenuGameOver(this.score, this.bgm);
             }
-            return; 
+            return;
         }
 
         // Delega la actualización visual de los textos
         this.ui.actualizarHUD(this.segundos, this.score);
 
-        this.fondo.tilePositionY -= 0.11 * delta * this.dificultad;
-        
-        if (this.dificultad < this.maxDificultad) this.dificultad += delta * 0.00008;
+        this.fondo.tilePositionY -= 0.22 * delta;
+
+        if (this.dificultad < this.maxDificultad) this.dificultad += delta * 0.000033;
 
         this.player.actualizarMovimiento();
-        this.spawner.update(time, this.dificultad); 
+        this.spawner.update(time, this.dificultad);
     }
 
     recogerRecompensa(player, recompensa) {
-        if (this.player.isDead) return; 
-        this.sound.play('sonidoOrbe', { volume: 0.5 }); 
-        const puntos = recompensa.getData('puntosBase');
-        this.score += Math.floor(puntos * this.dificultad);
+        if (this.player.isDead) return;
+
+        this.sound.play('sonidoOrbe', { volume: 0.5 });
+
+        const puntosBase = recompensa.getData('puntosBase');
+        const puntosGanados = Math.floor(puntosBase * this.dificultad);
+        this.score += puntosGanados;
+
+        // COLORES DINÁMICOS SEGÚN EL TIPO DE ORBE
+        let colorTexto = '#FFFFFF'; // Blanco por si acaso
+        if (recompensa.texture.key === 'orbe1') {
+            colorTexto = '#FF4444'; // Rojo intenso
+        } else if (recompensa.texture.key === 'orbe2') {
+            colorTexto = '#00CCFF'; // Azul neón
+        } else if (recompensa.texture.key === 'orbe3') {
+            colorTexto = '#FFD700'; // Dorado
+        }
+
+        // --- EFECTO: TEXTO FLOTANTE DE PUNTOS ---
+        const textoPuntos = this.add.text(recompensa.x, recompensa.y, `+${puntosGanados}`, {
+            fontSize: '22px',
+            fill: colorTexto, // Aplicamos el color que hemos calculado
+            fontFamily: 'monospace',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 4
+        }).setOrigin(0.5).setDepth(50);
+
+        // Animamos el texto para que suba y se desvanezca
+        this.tweens.add({
+            targets: textoPuntos,
+            y: textoPuntos.y - 60,
+            alpha: 0,
+            duration: 1600,
+            ease: 'Cubic.easeOut',
+            onComplete: () => {
+                textoPuntos.destroy();
+            }
+        });
+
+        // Emitimos las partículas y destruimos el orbe
         this.explosionOrbes.emitParticleAt(recompensa.x, recompensa.y, 30);
         recompensa.destroy();
     }
 
     chocarEnemigo(player, enemigo) {
-        if (this.player.isDead) return; 
-        this.sound.play('sonidoChocar', { volume: 0.8 }); 
+        if (this.player.isDead) return;
+        this.sound.play('sonidoChocar', { volume: 0.8 });
         this.input.setDefaultCursor('default');
         this.player.morir(enemigo);
         this.colisionEnemigos.active = false;
