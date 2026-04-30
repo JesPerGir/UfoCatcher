@@ -1,9 +1,17 @@
 import { Link } from 'react-router-dom';
 import logo from '../assets/logo.png'; 
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function Navbar({ onOpenAuth }) {
   const { user, logout } = useAuth(); 
+  const navigate = useNavigate();
+
+  // Función para cerrar sesión y expulsar al usuario a la Home
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   return (
     <nav className="bg-white border-b border-gray-300 w-full p-4 sticky top-0 z-50">
@@ -49,7 +57,7 @@ export default function Navbar({ onOpenAuth }) {
             // ZONA DE PERFIL CON ENLACE ACTIVO
             <div className="flex items-center gap-6">
               
-              {/* Envolvemos el nombre y el avatar en un Link hacia /perfil */}
+              {/* Enveuelve el nombre y el avatar en un Link hacia /perfil */}
               <Link 
                 to="/perfil" 
                 className="flex items-center gap-3 group transition-transform hover:scale-105"
@@ -71,8 +79,9 @@ export default function Navbar({ onOpenAuth }) {
                 </div>
               </Link>
 
+              {/* Botón actualizado para usar handleLogout */}
               <button 
-                onClick={logout}
+                onClick={handleLogout}
                 className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors uppercase tracking-tighter border-b border-transparent hover:border-red-700"
               >
                 Cerrar Sesión

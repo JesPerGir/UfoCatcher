@@ -61,7 +61,7 @@ export default function AuthForm({ type, onClose, onSwitchType }) {
   };
 
   return (
-    <div onClick={handleBackdropClick} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+    <div onMouseDown={handleBackdropClick} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
       <div className="relative w-full max-w-sm p-8 bg-white rounded-lg shadow-2xl border-t-4 border-primario text-texto animate-slide-up">
         
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-secundario transition-colors">
