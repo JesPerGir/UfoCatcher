@@ -63,23 +63,25 @@ npm run dev
 ### 5. Autor
 Jesús Pérez Giráldez - Proyecto Final de 2º Desarrollo de Aplicaciones Web (DAW).
 
-#Agradecimientos especiales a los autores de los assets gratuitos utilizados:
+Agradecimientos especiales a los autores de los assets gratuitos utilizados:
 
-###Celestial Objects Pixel Art
-###Twitter - https://twitter.com/norma_2d
-###DeviantArt - https://www.deviantart.com/norma2d
-###https://uselesspursuit.itch.io/celestial-objects-pixel-art-pack?download
-
-###Seamless Space Backgounds
-###https://screamingbrainstudios.itch.io/seamless-space-backgrounds
-
-###Free Bullet Hell Mini Music Pack
-###https://shononoki.itch.io/bullet-hell-music-pack
-
-###8-bit / 16-bit Sound Effects (x25) Pack
-###Twitter - https://x.com/JDWasabi
-###https://jdwasabi.itch.io/8-bit-16-bit-sound-effects-pack
-
-###Daily Doodles Pixel Art Asset Pack #1
-###Twitter - https://x.com/zsoka75
-###https://raventale.itch.io/daily-doodles-pixelart-asset-pack
+---
+### Celestial Objects Pixel Art
+### Twitter - https://twitter.com/norma_2d
+### DeviantArt - https://www.deviantart.com/norma2d
+### https://uselesspursuit.itch.io/celestial-objects-pixel-art-pack?download
+---
+### Seamless Space Backgounds
+### https://screamingbrainstudios.itch.io/seamless-space-backgrounds
+---
+### Free Bullet Hell Mini Music Pack
+### https://shononoki.itch.io/bullet-hell-music-pack
+---
+### 8-bit / 16-bit Sound Effects (x25) Pack
+### Twitter - https://x.com/JDWasabi
+### https://jdwasabi.itch.io/8-bit-16-bit-sound-effects-pack
+---
+### Daily Doodles Pixel Art Asset Pack #1
+### Twitter - https://x.com/zsoka75
+### https://raventale.itch.io/daily-doodles-pixelart-asset-pack
+---
