@@ -63,9 +63,9 @@ npm run dev
 ### 5. Autor
 Jesús Pérez Giráldez - Proyecto Final de 2º Desarrollo de Aplicaciones Web (DAW).
 
-Agradecimientos especiales a los autores de los assets gratuitos utilizados:
-
 ---
+### Agradecimientos especiales a los autores de los assets gratuitos utilizados:
+
 ### Celestial Objects Pixel Art
 ### Twitter - https://twitter.com/norma_2d
 ### DeviantArt - https://www.deviantart.com/norma2d
